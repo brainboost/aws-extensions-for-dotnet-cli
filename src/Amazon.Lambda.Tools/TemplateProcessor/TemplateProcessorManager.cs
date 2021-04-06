@@ -12,6 +12,7 @@ using Amazon.S3;
 using Amazon.S3.Transfer;
 using Newtonsoft.Json.Schema;
 using Amazon.Lambda.Tools.Commands;
+using Amazon.Common.DotNetCli.Tools.Options;
 
 namespace Amazon.Lambda.Tools.TemplateProcessor
 {    
@@ -175,17 +176,42 @@ namespace Amazon.Lambda.Tools.TemplateProcessor
             }
             else if(field.IsCode)
             {
+                bool isLocalPathDotNetProjectDirectory = IsDotnetProjectDirectory(localPath);
+                string projectLocationSwitchValue = this.OriginatingCommand.GetStringValueOrDefault(this.OriginatingCommand.ProjectLocation, CommonDefinedCommandOptions.ARGUMENT_PROJECT_LOCATION, false);
+                string projectLocation = Utilities.DetermineProjectLocation(this.OriginatingCommand.WorkingDirectory, projectLocationSwitchValue);
+
+                // Use working directory as location only if localPath is NOT .NET project directory and determined project location contains .NET project
+                bool shouldUseWorkingDirectoryProjectLocation = !isLocalPathDotNetProjectDirectory && IsDotnetProjectDirectory(projectLocation);
+
+                if (shouldUseWorkingDirectoryProjectLocation)
+                {
+                    results = await PackageDotnetProjectAsync(field, this.OriginatingCommand.WorkingDirectory, args);
+                }
+                else if (isLocalPathDotNetProjectDirectory || field.Resource.UploadType == CodeUploadType.Image)
                 // If the function is image upload then run the .NET tools to handle running
                 // docker build even if the current folder is not a .NET project. The .NET
                 // could be in a sub folder or be a self contained Docker build.
-                if (IsDotnetProjectDirectory(localPath) || field.Resource.UploadType == CodeUploadType.Image)
                 {
+                    // If using localPath since it contains .NET project, ignore project location argument (set it to blank) so that PackageCommand doesn't consider it.
+                    int projectLocationSwitchIndex = -1;
+                    for (int counter = 0; counter < args.Length; counter++)
+                    {
+                        if (string.Equals(args[counter], CommonDefinedCommandOptions.ARGUMENT_PROJECT_LOCATION.ShortSwitch, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(args[counter], CommonDefinedCommandOptions.ARGUMENT_PROJECT_LOCATION.Switch, StringComparison.OrdinalIgnoreCase))
+                        {
+                            projectLocationSwitchIndex = counter;
+                            break;
+                        }
+                    }
+
+                    if (projectLocationSwitchIndex != -1 && (projectLocationSwitchIndex + 1) < args.Length) args[projectLocationSwitchIndex + 1] = string.Empty;
+
                     results = await PackageDotnetProjectAsync(field, localPath, args);
                 }
                 else
                 {
                     results = new UpdateResourceResults { ZipArchivePath = GenerateOutputZipFilename(field) };
-                    LambdaPackager.BundleDirectory(results.ZipArchivePath, localPath, false, this.Logger);                    
+                    LambdaPackager.BundleDirectory(results.ZipArchivePath, localPath, false, this.Logger);
                 }
                 deleteArchiveAfterUploaded = true;
             }
