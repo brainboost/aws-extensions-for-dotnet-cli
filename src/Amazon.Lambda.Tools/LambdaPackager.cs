@@ -4,8 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.IO.Compression;
-using System.Runtime.InteropServices;
 using System.Text;
 using Amazon.Common.DotNetCli.Tools;
 using ThirdParty.Json.LitJson;
@@ -133,54 +131,14 @@ namespace Amazon.Lambda.Tools
 
         public static void BundleDirectory(string zipArchivePath, string sourceDirectory, bool flattenRuntime, IToolLogger logger)
         {
-#if NETCORE
-            if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                BundleWithBuildLambdaZip(zipArchivePath, sourceDirectory, flattenRuntime, logger);
-            }
-            else
-            {
-                // Use the native zip utility if it exist which will maintain linux/osx file permissions
-                var zipCLI = LambdaDotNetCLIWrapper.FindExecutableInPath("zip");
-                if (!string.IsNullOrEmpty(zipCLI))
-                {
-                    BundleWithZipCLI(zipCLI, zipArchivePath, sourceDirectory, flattenRuntime, logger);
-                }
-                else
-                {
-                    throw new LambdaToolsException("Failed to find the \"zip\" utility program in path. This program is required to maintain Linux file permissions in the zip archive.", LambdaToolsException.LambdaErrorCode.FailedToFindZipProgram);
-                }
-            }
-#else
             BundleWithBuildLambdaZip(zipArchivePath, sourceDirectory, flattenRuntime, logger);
-#endif            
         }
 
         public static void BundleFiles(string zipArchivePath, string rootDirectory, string[] files, IToolLogger logger)
         {
             var includedFiles = ConvertToMapOfFiles(rootDirectory, files);
 
-#if NETCORE
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                BundleWithBuildLambdaZip(zipArchivePath, rootDirectory, includedFiles, logger);
-            }
-            else
-            {
-                // Use the native zip utility if it exist which will maintain linux/osx file permissions
-                var zipCLI = LambdaDotNetCLIWrapper.FindExecutableInPath("zip");
-                if (!string.IsNullOrEmpty(zipCLI))
-                {
-                    BundleWithZipCLI(zipCLI, zipArchivePath, rootDirectory, includedFiles, logger);
-                }
-                else
-                {
-                    throw new LambdaToolsException("Failed to find the \"zip\" utility program in path. This program is required to maintain Linux file permissions in the zip archive.", LambdaToolsException.LambdaErrorCode.FailedToFindZipProgram);
-                }
-            }
-#else
-                BundleWithBuildLambdaZip(zipArchivePath, rootDirectory, includedFiles, logger);
-#endif
+            BundleWithBuildLambdaZip(zipArchivePath, rootDirectory, includedFiles, logger);
         }
 
 
