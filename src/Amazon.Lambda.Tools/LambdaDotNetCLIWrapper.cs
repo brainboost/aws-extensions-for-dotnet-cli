@@ -309,6 +309,7 @@ namespace Amazon.Lambda.Tools
                 ProcessAdditionalFiles(defaults, outputLocation);
 
                 var chmodPath = FindExecutableInPath("chmod");
+                var touchPath = FindExecutableInPath("touch");
                 if (!string.IsNullOrEmpty(chmodPath) && File.Exists(chmodPath))
                 {
                     // as we are not invoking through a shell, which would handle
@@ -317,40 +318,46 @@ namespace Amazon.Lambda.Tools
                     foreach (var file in files)
                     {
                         var filename = Path.GetFileName(file);
-                        var psiChmod = new ProcessStartInfo
-                        {
-                            FileName = chmodPath,
-                            Arguments = "+rx \"" + filename + "\"",
-                            WorkingDirectory = outputLocation,
-                            RedirectStandardOutput = true,
-                            RedirectStandardError = true,
-                            UseShellExecute = false,
-                            CreateNoWindow = true
-                        };
-
-                        using (var proc = new Process())
-                        {
-                            proc.StartInfo = psiChmod;
-                            proc.Start();
-
-                            proc.ErrorDataReceived += handler;
-                            proc.OutputDataReceived += handler;
-                            proc.BeginOutputReadLine();
-                            proc.BeginErrorReadLine();
-
-                            proc.EnableRaisingEvents = true;
-                            proc.WaitForExit();
-
-                            if (proc.ExitCode == 0)
-                            {
-                                this._logger?.WriteLine($"Changed permissions on published file (chmod +rx {filename}).");
-                            }
-                        }
+                        ApplyCommand(outputLocation, chmodPath, $"+rx \"{filename}\"", handler);
+                        ApplyCommand(outputLocation, touchPath, $"-a -m -t 201512180130.09 \"{filename}\"", handler);
                     }
                 }
             }
 
             return exitCode;
+        }
+
+        private void ApplyCommand(string outputLocation, string commandPath, string arguments, DataReceivedEventHandler handler)
+        {
+            var psiChmod = new ProcessStartInfo
+            {
+                FileName = commandPath,
+                Arguments = arguments,
+                WorkingDirectory = outputLocation,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using (var proc = new Process())
+            {
+                proc.StartInfo = psiChmod;
+                proc.Start();
+
+                proc.ErrorDataReceived += handler;
+                proc.OutputDataReceived += handler;
+                proc.BeginOutputReadLine();
+                proc.BeginErrorReadLine();
+
+                proc.EnableRaisingEvents = true;
+                proc.WaitForExit();
+
+                if (proc.ExitCode == 0)
+                {
+                    _logger?.WriteLine($"Applying command to published file ({commandPath} {arguments})");
+                }
+            }
         }
 
         private void ProcessAdditionalFiles(LambdaToolsDefaults defaults, string publishLocation)
@@ -388,6 +395,7 @@ namespace Amazon.Lambda.Tools
         {
             {"dotnet.exe", @"C:\Program Files\dotnet\dotnet.exe" },
             {"chmod", @"/bin/chmod" },
+            {"touch", @"/bin/touch" },
             {"zip", @"/usr/bin/zip" }
         };
 
