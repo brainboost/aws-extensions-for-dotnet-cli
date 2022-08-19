@@ -54,8 +54,8 @@ namespace Amazon.Lambda.Tools.Test
             command.MemorySize = 512;
             command.Role = await TestHelper.GetTestRoleArnAsync();
             command.Configuration = "Release";
-            command.TargetFramework = "netcoreapp2.1";
-            command.Runtime = "dotnetcore2.1";
+            command.TargetFramework = "netcoreapp3.1";
+            command.Runtime = "dotnetcore3.1";
             command.DisableInteractive = true;
 
             var created = await command.ExecuteAsync();
@@ -63,6 +63,7 @@ namespace Amazon.Lambda.Tools.Test
             {
                 Assert.True(created);
 
+                await LambdaUtilities.WaitTillFunctionAvailableAsync(new TestToolLogger(_testOutputHelper), command.LambdaClient, command.FunctionName);
                 var invokeRequest = new InvokeRequest
                 {
                     FunctionName = command.FunctionName,
@@ -105,6 +106,7 @@ namespace Amazon.Lambda.Tools.Test
             {
                 Assert.True(created);
 
+                await LambdaUtilities.WaitTillFunctionAvailableAsync(new TestToolLogger(_testOutputHelper), command.LambdaClient, command.FunctionName);
                 var invokeRequest = new InvokeRequest
                 {
                     FunctionName = command.FunctionName,
@@ -141,7 +143,7 @@ namespace Amazon.Lambda.Tools.Test
             command.Timeout = 10;
             command.Role = await TestHelper.GetTestRoleArnAsync();
             command.Configuration = "Release";
-            command.Runtime = "dotnetcore2.1";
+            command.Runtime = "dotnetcore3.1";
             command.DisableInteractive = true;
 
             var created = await command.ExecuteAsync();
@@ -149,6 +151,7 @@ namespace Amazon.Lambda.Tools.Test
             {
                 Assert.True(created);
 
+                await LambdaUtilities.WaitTillFunctionAvailableAsync(new TestToolLogger(_testOutputHelper), command.LambdaClient, command.FunctionName);
                 var invokeRequest = new InvokeRequest
                 {
                     FunctionName = command.FunctionName,
@@ -193,7 +196,7 @@ namespace Amazon.Lambda.Tools.Test
             deployCommand.MemorySize = 512;
             deployCommand.Role = await TestHelper.GetTestRoleArnAsync();
             deployCommand.Package = packageZip;
-            deployCommand.Runtime = "dotnetcore2.1";
+            deployCommand.Runtime = "dotnetcore3.1";
             deployCommand.Region = "us-east-1";
             deployCommand.DisableInteractive = true;
 
@@ -202,6 +205,7 @@ namespace Amazon.Lambda.Tools.Test
             {
                 Assert.True(created);
 
+                await LambdaUtilities.WaitTillFunctionAvailableAsync(new TestToolLogger(_testOutputHelper), deployCommand.LambdaClient, deployCommand.FunctionName);
                 var invokeRequest = new InvokeRequest
                 {
                     FunctionName = deployCommand.FunctionName,
@@ -290,8 +294,8 @@ namespace Amazon.Lambda.Tools.Test
                 initialDeployCommand.MemorySize = 512;
                 initialDeployCommand.Role = await TestHelper.GetTestRoleArnAsync();
                 initialDeployCommand.Configuration = "Release";
-                initialDeployCommand.TargetFramework = "netcoreapp2.1";
-                initialDeployCommand.Runtime = "dotnetcore2.1";
+                initialDeployCommand.TargetFramework = "netcoreapp3.1";
+                initialDeployCommand.Runtime = "dotnetcore3.1";
                 initialDeployCommand.DeadLetterTargetArn = queueArn;
                 initialDeployCommand.DisableInteractive = true;
 
@@ -307,8 +311,8 @@ namespace Amazon.Lambda.Tools.Test
                     var redeployCommand = new DeployFunctionCommand(new TestToolLogger(_testOutputHelper), fullPath, new string[0]);
                     redeployCommand.FunctionName = initialDeployCommand.FunctionName;
                     redeployCommand.Configuration = "Release";
-                    redeployCommand.TargetFramework = "netcoreapp2.1";
-                    redeployCommand.Runtime = "dotnetcore2.1";
+                    redeployCommand.TargetFramework = "netcoreapp3.1";
+                    redeployCommand.Runtime = "dotnetcore3.1";
                     redeployCommand.DisableInteractive = true;
 
                     var redeployed = await redeployCommand.ExecuteAsync();
@@ -320,8 +324,8 @@ namespace Amazon.Lambda.Tools.Test
                     redeployCommand = new DeployFunctionCommand(new TestToolLogger(_testOutputHelper), fullPath, new string[0]);
                     redeployCommand.FunctionName = initialDeployCommand.FunctionName;
                     redeployCommand.Configuration = "Release";
-                    redeployCommand.TargetFramework = "netcoreapp2.1";
-                    redeployCommand.Runtime = "dotnetcore2.1";
+                    redeployCommand.TargetFramework = "netcoreapp3.1";
+                    redeployCommand.Runtime = "dotnetcore3.1";
                     redeployCommand.DeadLetterTargetArn = "";
                     redeployCommand.DisableInteractive = true;
 
@@ -363,7 +367,7 @@ namespace Amazon.Lambda.Tools.Test
                 var command = new DeployServerlessCommand(logger, fullPath, new string[0]);
                 command.DisableInteractive = true;
                 command.Configuration = "Release";
-                command.TargetFramework = "netcoreapp2.1";
+                command.TargetFramework = "netcoreapp3.1";
                 command.StackName = "DeployStepFunctionWithTemplateSubstitution-" + DateTime.Now.Ticks;
                 command.S3Bucket = bucketName;
                 command.WaitForStackToComplete = true;
@@ -476,7 +480,7 @@ namespace Amazon.Lambda.Tools.Test
             var command = new PackageCICommand(logger, fullPath, new string[0]);
             command.Region = "us-west-2";
             command.Configuration = "Release";
-            command.TargetFramework = "netcoreapp2.1";
+            command.TargetFramework = "netcoreapp3.1";
             command.CloudFormationTemplate = "serverless.template";
             command.CloudFormationOutputTemplate = Path.Combine(Path.GetTempPath(),  "output-serverless.template");
             command.S3Bucket = "serverless-package-test-" + DateTime.Now.Ticks;
@@ -509,7 +513,7 @@ namespace Amazon.Lambda.Tools.Test
             var command = new DeployServerlessCommand(logger, fullPath, new string[0]);
             command.Region = "us-east-1";
             command.Configuration = "Release";
-            command.TargetFramework = "netcoreapp2.1";
+            command.TargetFramework = "netcoreapp3.1";
             command.CloudFormationTemplate = "large-serverless.template";
             command.StackName = "TestDeployLargeServerless-" + DateTime.Now.Ticks;
             command.S3Bucket = this._testFixture.Bucket;

@@ -43,12 +43,18 @@ namespace Amazon.Lambda.Tools.Commands
 
             LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_HANDLER,
             LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_RUNTIME,
+            LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_ARCHITECTURE,
             LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_LAYERS,
 
             LambdaDefinedCommandOptions.ARGUMENT_IMAGE_ENTRYPOINT,
             LambdaDefinedCommandOptions.ARGUMENT_IMAGE_COMMAND,
             LambdaDefinedCommandOptions.ARGUMENT_IMAGE_WORKING_DIRECTORY,
             CommonDefinedCommandOptions.ARGUMENT_DOCKER_TAG,
+
+            LambdaDefinedCommandOptions.ARGUMENT_EPHEMERAL_STORAGE_SIZE,
+
+            LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_URL_ENABLE,
+            LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_URL_AUTH,
 
             LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_TAGS,
             LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_SUBNETS,
@@ -70,6 +76,7 @@ namespace Amazon.Lambda.Tools.Commands
             CommonDefinedCommandOptions.ARGUMENT_HOST_BUILD_OUTPUT
         });
 
+        public string Architecture { get; set; }
         public string Configuration { get; set; }
         public string TargetFramework { get; set; }
         public string Package { get; set; }
@@ -120,6 +127,8 @@ namespace Amazon.Lambda.Tools.Commands
                 this.S3Prefix = tuple.Item2.StringValue;
             if ((tuple = values.FindCommandOption(LambdaDefinedCommandOptions.ARGUMENT_DISABLE_VERSION_CHECK.Switch)) != null)
                 this.DisableVersionCheck = tuple.Item2.BoolValue;
+            if ((tuple = values.FindCommandOption(LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_ARCHITECTURE.Switch)) != null)
+                this.Architecture = tuple.Item2.StringValue;
 
             if ((tuple = values.FindCommandOption(CommonDefinedCommandOptions.ARGUMENT_MSBUILD_PARAMETERS.Switch)) != null)
                 this.MSBuildParameters = tuple.Item2.StringValue;
@@ -161,6 +170,8 @@ namespace Amazon.Lambda.Tools.Commands
 
             var layerVersionArns = this.GetStringValuesOrDefault(this.LayerVersionArns, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_LAYERS, false);
             var layerPackageInfo = await LambdaUtilities.LoadLayerPackageInfos(this.Logger, this.LambdaClient, this.S3Client, layerVersionArns);
+
+            var architecture = this.GetStringValueOrDefault(this.Architecture, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_ARCHITECTURE, false);
 
             Lambda.PackageType packageType = DeterminePackageType();
             string ecrImageUri = null;
@@ -206,7 +217,18 @@ namespace Amazon.Lambda.Tools.Commands
 
                     bool disableVersionCheck = this.GetBoolValueOrDefault(this.DisableVersionCheck, LambdaDefinedCommandOptions.ARGUMENT_DISABLE_VERSION_CHECK, false).GetValueOrDefault();
                     string publishLocation;
-                    LambdaPackager.CreateApplicationBundle(this.DefaultConfig, this.Logger, this.WorkingDirectory, projectLocation, configuration, targetFramework, msbuildParameters, disableVersionCheck, layerPackageInfo, out publishLocation, ref zipArchivePath);
+                    LambdaPackager.CreateApplicationBundle(defaults: this.DefaultConfig, 
+                                                            logger: this.Logger, 
+                                                            workingDirectory: this.WorkingDirectory,
+                                                            projectLocation: projectLocation,
+                                                            configuration: configuration,
+                                                            targetFramework: targetFramework,
+                                                            msbuildParameters: msbuildParameters,
+                                                            architecture: architecture,
+                                                            disableVersionCheck: disableVersionCheck,
+                                                            layerPackageInfo: layerPackageInfo,
+                                                            publishLocation: out publishLocation, zipArchivePath: ref zipArchivePath);
+
                     if (string.IsNullOrEmpty(zipArchivePath))
                         return false;
                 }
@@ -265,6 +287,20 @@ namespace Amazon.Lambda.Tools.Commands
                             SecurityGroupIds = this.GetStringValuesOrDefault(this.SecurityGroupIds, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_SECURITY_GROUPS, false)?.ToList()
                         }
                     };
+
+                    var ephemeralSize = this.GetIntValueOrDefault(this.EphemeralStorageSize, LambdaDefinedCommandOptions.ARGUMENT_EPHEMERAL_STORAGE_SIZE, false);
+                    if(ephemeralSize.HasValue)
+                    {
+                        createRequest.EphemeralStorage = new EphemeralStorage
+                        {
+                            Size = ephemeralSize.Value
+                        };
+                    }
+
+                    if (!string.IsNullOrEmpty(architecture))
+                    {
+                        createRequest.Architectures = new List<string> { architecture };
+                    }
 
                     if(packageType == Lambda.PackageType.Zip)
                     {
@@ -352,6 +388,13 @@ namespace Amazon.Lambda.Tools.Commands
                     {
                         throw new LambdaToolsException($"Error creating Lambda function: {e.Message}", LambdaToolsException.LambdaErrorCode.LambdaCreateFunction, e);
                     }
+
+                    if(this.GetBoolValueOrDefault(this.FunctionUrlEnable, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_URL_ENABLE, false).GetValueOrDefault())
+                    {
+                        var authType = this.GetStringValueOrDefault(this.FunctionUrlAuthType, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_URL_AUTH, false);
+                        await base.CreateFunctionUrlConfig(createRequest.FunctionName, authType);
+                        this.Logger.WriteLine($"Function url config created: {this.FunctionUrlLink}");
+                    }
                 }
                 else
                 {
@@ -361,6 +404,11 @@ namespace Amazon.Lambda.Tools.Commands
                     {
                         FunctionName = this.GetStringValueOrDefault(this.FunctionName, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_NAME, true)
                     };
+
+                    if (!string.IsNullOrEmpty(architecture))
+                    {
+                        updateCodeRequest.Architectures = new List<string> { architecture };
+                    }
 
                     // In case the function is currently being updated from previous deployment wait till it available
                     // to be updated.
@@ -488,7 +536,13 @@ namespace Amazon.Lambda.Tools.Commands
             data.SetIfNotNull(LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_ROLE.ConfigFileKey, this.GetStringValueOrDefault(this.Role, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_ROLE, false));
             data.SetIfNotNull(LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_TIMEOUT.ConfigFileKey, this.GetIntValueOrDefault(this.Timeout, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_TIMEOUT, false));
             data.SetIfNotNull(LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_RUNTIME.ConfigFileKey, this.GetStringValueOrDefault(this.Runtime, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_RUNTIME, false));
+            data.SetIfNotNull(LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_ARCHITECTURE.ConfigFileKey, this.GetStringValueOrDefault(this.Architecture, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_ARCHITECTURE, false));
             data.SetIfNotNull(LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_LAYERS.ConfigFileKey, LambdaToolsDefaults.FormatCommaDelimitedList(this.GetStringValuesOrDefault(this.LayerVersionArns, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_LAYERS, false)));
+
+            data.SetIfNotNull(LambdaDefinedCommandOptions.ARGUMENT_EPHEMERAL_STORAGE_SIZE.ConfigFileKey, this.GetIntValueOrDefault(this.EphemeralStorageSize, LambdaDefinedCommandOptions.ARGUMENT_EPHEMERAL_STORAGE_SIZE, false));
+
+            data.SetIfNotNull(LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_URL_ENABLE.ConfigFileKey, this.GetBoolValueOrDefault(this.FunctionUrlEnable, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_URL_ENABLE, false));
+            data.SetIfNotNull(LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_URL_AUTH.ConfigFileKey, this.GetStringValueOrDefault(this.FunctionUrlAuthType, LambdaDefinedCommandOptions.ARGUMENT_FUNCTION_URL_AUTH, false));
 
             data.SetIfNotNull(LambdaDefinedCommandOptions.ARGUMENT_IMAGE_ENTRYPOINT.ConfigFileKey, LambdaToolsDefaults.FormatCommaDelimitedList(this.GetStringValuesOrDefault(this.ImageEntryPoint, LambdaDefinedCommandOptions.ARGUMENT_IMAGE_ENTRYPOINT, false)));
             data.SetIfNotNull(LambdaDefinedCommandOptions.ARGUMENT_IMAGE_COMMAND.ConfigFileKey, LambdaToolsDefaults.FormatCommaDelimitedList(this.GetStringValuesOrDefault(this.ImageCommand, LambdaDefinedCommandOptions.ARGUMENT_IMAGE_COMMAND, false)));

@@ -47,7 +47,12 @@ namespace Amazon.Lambda.Tools.TemplateProcessor
         /// If the resource is a AWS::Lambda::Function or AWS::Serverless::Function get the Lambda runtime for it.
         /// </summary>
         string LambdaRuntime { get; }
-        
+
+        /// <summary>
+        /// If the resource is a AWS::Lambda::Function or AWS::Serverless::Function get the Lambda architecture for it.
+        /// </summary>
+        string LambdaArchitecture { get; }
+
         /// <summary>
         /// Gets the list of layers specified if this is a Lambda function.
         /// </summary>
@@ -123,6 +128,12 @@ namespace Amazon.Lambda.Tools.TemplateProcessor
         /// </summary>
         /// <returns></returns>
         string GetMetadataDockerTag();
+
+        /// <summary>
+        /// Gets the Docker build args specified for an AWS::Serverless::Function
+        /// </summary>
+        /// <returns></returns>
+        Dictionary<string, string> GetMetadataDockerBuildArgs();
     }
 
     /// <summary>
@@ -171,6 +182,7 @@ namespace Amazon.Lambda.Tools.TemplateProcessor
         /// <param name="keyPath"></param>
         /// <returns></returns>
         string[] GetValueList(params string[] keyPath);
-        
+
+        Dictionary<string, string> GetValueDictionaryFromResource(params string[] keyPath);
     }
 }

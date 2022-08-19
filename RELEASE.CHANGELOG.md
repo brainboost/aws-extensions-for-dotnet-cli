@@ -1,3 +1,81 @@
+### Release 2022-08-18
+* **Amazon.Common.DotNetCli.Tools (3.1.0.1)**
+  * Fixes an issue where exception could occur while expanding null policy name and attaching it to a role.
+* **Amazon.Lambda.Tools (5.4.5)**
+  * Fixes an issue where Lambda deploy-function fails when choosing option to add permissions later.
+* **Amazon.ECS.Tools (3.5.2)**
+  * Updated to reference the latest version of Amazon.Common.DotNetCli.Tools.
+* **Amazon.ElasticBeanstalk.Tools (4.3.2)**
+  * Updated to reference the latest version of Amazon.Common.DotNetCli.Tools.
+
+### Release 2022-06-27
+* **Amazon.Lambda.Tools (5.4.4)**
+  * Bump Newtonsoft.Json to 13.0.1
+  
+### Release 2022-06-21
+* **Amazon.Lambda.Tools (5.4.3)**
+  * Added ability to use DockerBuildArgs in Amazon.Lambda.Tools serverless template.
+
+### Release 2022-06-02
+* **Amazon.Lambda.Tools (5.4.2)**
+  * Only modify Function Url if `--function-url-enable` flag is set.
+  * Fixed an issue where lambda push-image command was ignoring Docker options.
+  
+### Release 2022-04-25
+* **Amazon.Lambda.Tools (5.4.1)**
+  * Fixed issue when `--function-url-enable` is absent the function url config was unintendedly removed. 
+
+### Release 2022-04-25
+* **Amazon.Lambda.Tools (5.4.0)**
+  * Added `--function-url-enable` and `--function-url-auth` switches to configure Lambda Function Url.
+  * Added `--ephemerals-storage-size` switch to configure the size of writable the `/tmp` folder.
+  * Fixed issue with removing all values from the following collection properties: Environment Variables, Layers and VPC subnets and security groups.
+
+### Release 2022-02-14
+* **Amazon.Lambda.Tools (5.3.0)**
+  * Package the tool targeting .NET 6 as well as the previous .NET Core 3.1 to support Mac M1 developers.
+  * Add .NET 6 target framework moniker to .NET 6 Lambda runtime enum mapping.
+* **Amazon.ECS.Tools (3.5.0)**
+  * Package the tool targeting .NET 6 as well as the previous .NET Core 3.1 to support Mac M1 developers.
+* **Amazon.ElasticBeanstalk.Tools (4.3.0)**
+  * Package the tool targeting .NET 6 as well as the previous .NET Core 3.1 to support Mac M1 developers.
+  
+### Release 2021-09-29
+* **Amazon.Lambda.Tools (5.2.0)**
+  * Added support for deploying ARM based Lambda functions with the new `--function-architecture` switch.
+  
+### Release 2021-09-28
+* **Amazon.ECS.Tools (3.4.3)**
+  * Fixed an issue where ECS log configuration argument is overwritten with awslogs defaults.
+
+### Release 2021-06-17
+* **Amazon.Lambda.Tools (5.1.4)**
+  * Added reference to AWSSDK.SSO and AWSSDK.SSOOIDC for SSO flow.
+* **Amazon.ECS.Tools (3.4.2)**
+  * Added reference to AWSSDK.SSO and AWSSDK.SSOOIDC for SSO flow.
+* **Amazon.ElasticBeanstalk.Tools (4.2.2)**
+  * Added reference to AWSSDK.SSO and AWSSDK.SSOOIDC for SSO flow.
+
+### Release 2021-06-02
+* **Amazon.Lambda.Tools (5.1.3)**
+  * Updated to version 3.7.0.27 of AWSSDK.Core
+  * Updated to version 3.7.1.15 of AWSSDK.SecurityToken
+* **Amazon.ECS.Tools (3.4.1)**
+  * Updated to version 3.7.0.27 of AWSSDK.Core
+  * Updated to version 3.7.1.15 of AWSSDK.SecurityToken
+* **Amazon.ElasticBeanstalk.Tools (4.2.1)**
+  * Updated to version 3.7.0.27 of AWSSDK.Core
+  * Updated to version 3.7.1.15 of AWSSDK.SecurityToken
+
+### Release 2021-05-03
+* **Amazon.Lambda.Tools (5.1.2)**
+  * Pull request [#170](https://github.com/aws/aws-extensions-for-dotnet-cli/pull/170) Fixed issue with unnecessary function config update when using VPC settings. Thanks [Abubaker Bashir](https://github.com/AbubakerB)
+  * Pull request [#169](https://github.com/aws/aws-extensions-for-dotnet-cli/pull/169) Fixed issue with runtime and handler fields not being updated. Thanks [Abubaker Bashir](https://github.com/AbubakerB)
+  
+### Release 2021-04-14
+* **Amazon.Lambda.Tools (5.1.1)**
+  * Fixed an issue where relative paths in package-ci command were not working.
+
 ### Release 2021-04-02
 * **Amazon.Lambda.Tools (5.1.0)**
   * Update to latest version of the AWS SDK for .NET.
@@ -6,6 +84,14 @@
 * **Amazon.ElasticBeanstalk.Tools (4.2.0)**
   * Update to latest version of the AWS SDK for .NET.
 
+### Release 2021-03-24
+* **Amazon.Lambda.Tools (5.01.0)**
+  * Updated to version 3.7 of the AWS SDK for .NET
+* **Amazon.ECS.Tools (3.4.0)**
+  * Updated to version 3.7 of the AWS SDK for .NET
+* **Amazon.ElasticBeanstalk.Tools (4.2.0)**
+  * Updated to version 3.7 of the AWS SDK for .NET
+  
 ### Release 2021-03-24
 * **Amazon.Lambda.Tools (5.0.2)**
   * Updated version of the AWS SDK for .NET used to include support for SSO.

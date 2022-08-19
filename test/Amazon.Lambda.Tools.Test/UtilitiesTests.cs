@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 
 using Xunit;
@@ -35,17 +36,21 @@ namespace Amazon.Lambda.Tools.Test
         }
 
         [Theory]
-        [InlineData("netcoreapp1.0", "rhel.7.2-x64")]
-        [InlineData("netcoreapp1.1", "linux-x64")]
-        [InlineData("netcoreapp2.0", "rhel.7.2-x64")]
-        [InlineData("netcoreapp2.1", "rhel.7.2-x64")]
-        [InlineData("netcoreapp2.2", "linux-x64")]
-        [InlineData("netcoreapp3.0", "linux-x64")]
-        [InlineData("netcoreapp3.1", "linux-x64")]
-        [InlineData("netcoreapp6.0", "linux-x64")]
-        public void TestDetermineRuntimeParameter(string targetFramework, string expectedValue)
+        [InlineData("netcoreapp1.0", LambdaConstants.ARCHITECTURE_X86_64, "rhel.7.2-x64")]
+        [InlineData("netcoreapp1.1", LambdaConstants.ARCHITECTURE_X86_64, "linux-x64")]
+        [InlineData("netcoreapp2.0", LambdaConstants.ARCHITECTURE_X86_64, "rhel.7.2-x64")]
+        [InlineData("netcoreapp2.1", LambdaConstants.ARCHITECTURE_X86_64, "rhel.7.2-x64")]
+        [InlineData("netcoreapp2.2", LambdaConstants.ARCHITECTURE_X86_64, "linux-x64")]
+        [InlineData("netcoreapp3.0", LambdaConstants.ARCHITECTURE_X86_64, "linux-x64")]
+        [InlineData("netcoreapp3.1", LambdaConstants.ARCHITECTURE_X86_64, "linux-x64")]
+        [InlineData("netcoreapp6.0", LambdaConstants.ARCHITECTURE_X86_64, "linux-x64")]
+        [InlineData("netcoreapp3.1", LambdaConstants.ARCHITECTURE_ARM64, "linux-arm64")]
+        [InlineData("netcoreapp6.0", LambdaConstants.ARCHITECTURE_ARM64, "linux-arm64")]
+        [InlineData(null, LambdaConstants.ARCHITECTURE_X86_64, "linux-x64")]
+        [InlineData(null, LambdaConstants.ARCHITECTURE_ARM64, "linux-arm64")]
+        public void TestDetermineRuntimeParameter(string targetFramework, string architecture, string expectedValue)
         {
-            var runtime = LambdaUtilities.DetermineRuntimeParameter(targetFramework);
+            var runtime = LambdaUtilities.DetermineRuntimeParameter(targetFramework, architecture);
             Assert.Equal(expectedValue, runtime);
         }
 
@@ -125,6 +130,12 @@ namespace Amazon.Lambda.Tools.Test
         [InlineData(@"c:\par1\Dockerfile.custom", @"c:\par1\par2", "../Dockerfile.custom")]
         public void TestSavingDockerfileInDefaults(string dockerfilePath, string projectLocation, string expected)
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                dockerfilePath = dockerfilePath.Replace(@"c:\", "/").Replace(@"\", "/");
+                projectLocation = projectLocation?.Replace(@"c:\", "/").Replace(@"\", "/");
+                expected = expected.Replace(@"c:\", "/").Replace(@"\", "/");
+            }
             var rootData = new ThirdParty.Json.LitJson.JsonData();
             rootData.SetFilePathIfNotNull("Dockerfile", dockerfilePath, projectLocation);
 

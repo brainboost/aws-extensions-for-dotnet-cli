@@ -108,6 +108,15 @@ namespace Amazon.Lambda.Tools
                 ValueType = CommandOption.CommandOptionValueType.StringValue,
                 Description = "The runtime environment for the Lambda function"
             };
+        public static readonly CommandOption ARGUMENT_FUNCTION_ARCHITECTURE =
+            new CommandOption
+            {
+                Name = "Architecture",
+                ShortSwitch = "-farch",
+                Switch = "--function-architecture",
+                ValueType = CommandOption.CommandOptionValueType.StringValue,
+                Description = $"The architecture of the Lambda function. Valid values: {LambdaConstants.ARCHITECTURE_X86_64} or {LambdaConstants.ARCHITECTURE_ARM64}. Default is {LambdaConstants.ARCHITECTURE_X86_64}"
+            };
         public static readonly CommandOption ARGUMENT_FUNCTION_SUBNETS =
             new CommandOption
             {
@@ -407,6 +416,30 @@ namespace Amazon.Lambda.Tools
                 Switch = "--image-tag",
                 ValueType = CommandOption.CommandOptionValueType.StringValue,
                 Description = "Docker image name and tag in the 'name:tag' format."
+            };
+        public static readonly CommandOption ARGUMENT_EPHEMERAL_STORAGE_SIZE =
+            new CommandOption
+            {
+                Name = "Ephemerals Storage Size",
+                Switch = "--ephemerals-storage-size",
+                ValueType = CommandOption.CommandOptionValueType.IntValue,
+                Description = "The size of the function's /tmp directory in MB. The default value is 512, but can be any whole number between 512 and 10240 MB"
+            };
+        public static readonly CommandOption ARGUMENT_FUNCTION_URL_ENABLE =
+            new CommandOption
+            {
+                Name = "Function Url Enable",
+                Switch = "--function-url-enable",
+                ValueType = CommandOption.CommandOptionValueType.BoolValue,
+                Description = "Enable function URL. A function URL is a dedicated HTTP(S) endpoint for your Lambda function."
+            };
+        public static readonly CommandOption ARGUMENT_FUNCTION_URL_AUTH =
+            new CommandOption
+            {
+                Name = "Function Url Auth Type",
+                Switch = "--function-url-auth",
+                ValueType = CommandOption.CommandOptionValueType.StringValue,
+                Description = $"The type of authentication that your function URL uses, default value is NONE. Valid values: {FunctionUrlAuthType.NONE} or {FunctionUrlAuthType.AWS_IAM}"
             };
     }
 }
